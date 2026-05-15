@@ -790,8 +790,11 @@ export default function App() {
       }, { merge: true });
     };
 
-    fetch('https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json')
-      .then(res => res.json())
+    fetch('./china.json')
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to load map');
+        return res.json();
+      })
       .then(geoJson => {
         echarts.registerMap('china', geoJson);
         chart.setOption(geoOption);

@@ -1,0 +1,9 @@
+{
+  "name": "mining-dashboard",
+  "installCommand": "npm install",
+  "buildCommand": "npx vite build",
+  "assets": {
+    "directory": "./dist",
+    "notFoundStrategy": "singlePageApplication"
+  }
+}
