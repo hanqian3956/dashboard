@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>保有金属量资源量分类 - 筛选框演示</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/echarts@5.5.0/dist/echarts.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0b1120;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 20px;
+    }
+    .demo-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #00d4ff;
+    }
+    .module-card {
+      background: rgba(13, 27, 62, 0.6);
+      border: 1px solid #1e3a5f;
+      border-radius: 4px;
+      padding: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+    .module-title {
+      font-size: 15px;
+      font-weight: bold;
+      color: #fff;
+      margin-bottom: 10px;
+      padding-left: 8px;
+      border-left: 3px solid #409eff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .filter-tags {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .filter-tag {
+      font-size: 11px;
+      font-weight: normal;
+      padding: 2px 8px;
+      border-radius: 3px;
+      user-select: none;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .filter-tag.time-filter-tag {
+      color: #e6a23c;
+      border: 1px solid rgba(230, 162, 60, 0.4);
+      background: rgba(230, 162, 60, 0.1);
+    }
+    .filter-tag.time-filter-tag:hover {
+      background: rgba(230, 162, 60, 0.2);
+    }
+    .filter-tag.mineral-filter-tag {
+      color: #67c23a;
+      border: 1px solid rgba(103, 194, 58, 0.4);
+      background: rgba(103, 194, 58, 0.1);
+    }
+    .filter-tag.mineral-filter-tag:hover {
+      background: rgba(103, 194, 58, 0.2);
+    }
+    .filter-tag.mine-select-tag {
+      color: #00d4ff;
+      border: 1px solid rgba(0, 212, 255, 0.4);
+      background: rgba(0, 212, 255, 0.1);
+    }
+    .filter-tag.mine-select-tag:hover {
+      background: rgba(0, 212, 255, 0.2);
+    }
+    .mine-dropdown {
+      position: absolute;
+      top: 36px;
+      right: 12px;
+      z-index: 10;
+      background: rgba(8, 16, 32, 0.95);
+      border: 1px solid #1e3a5f;
+      border-radius: 4px;
+      max-height: 180px;
+      overflow-y: auto;
+      min-width: 120px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+    .mine-dropdown.time-dropdown {
+      right: 180px;
+      min-width: 100px;
+    }
+    .mine-dropdown.mineral-dropdown {
+      right: 100px;
+      min-width: 80px;
+    }
+    .mine-dropdown-item {
+      padding: 6px 12px;
+      font-size: 12px;
+      color: #a0c4e8;
+      cursor: pointer;
+      transition: all 0.15s;
+      border-bottom: 1px solid rgba(30, 58, 95, 0.3);
+    }
+    .mine-dropdown-item:last-child {
+      border-bottom: none;
+    }
+    .mine-dropdown-item:hover {
+      background: rgba(64, 158, 255, 0.15);
+      color: #fff;
+    }
+    .mine-dropdown-item.active {
+      background: rgba(0, 212, 255, 0.15);
+      color: #00d4ff;
+    }
+    .chart-box {
+      height: 200px;
+      margin-top: 10px;
+    }
+    .classify-text {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #8cb4d4;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .classify-text .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(30, 58, 95, 0.25);
+      border-radius: 4px;
+      padding: 4px 8px;
+      border: 1px solid rgba(30, 58, 95, 0.5);
+    }
+    .classify-text .label {
+      color: #a0c4e8;
+      font-size: 11px;
+    }
+    .classify-text .val {
+      color: #00d4ff;
+      font-size: 13px;
+      font-weight: bold;
+    }
+    .classify-text .total-row {
+      background: rgba(0, 212, 255, 0.08);
+      border: 1px solid rgba(0, 212, 255, 0.25);
+    }
+    .classify-text .total-row .label {
+      color: #fff;
+      font-weight: bold;
+    }
+    .classify-text .total-row .val {
+      color: #ffd700;
+      font-size: 14px;
+    }
+    .info-box {
+      background: rgba(30, 58, 95, 0.3);
+      border: 1px solid #1e3a5f;
+      border-radius: 4px;
+      padding: 15px;
+      margin-top: 20px;
+    }
+    .info-box h3 {
+      color: #409eff;
+      margin-bottom: 10px;
+    }
+    .info-box ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    .info-box li {
+      padding: 5px 0;
+      color: #8cb4d4;
+    }
+    .info-box li:before {
+      content: "• ";
+      color: #00d4ff;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+    
+    function App() {
+      const mineUnits = ['锡铁山分公司', '西部铜业', '玉龙铜业', '鑫源矿业', '新疆瑞伦', '哈密博伦', '肃北博伦', '双利矿业', '大梁矿业', '鸿丰伟业'];
+      const [currentMineIndex, setCurrentMineIndex] = useState(0);
+      const [pieData, setPieData] = useState({ control: 1.65, infer: 1.32, prove: 1.08 });
+      const [isPieHovering, setIsPieHovering] = useState(false);
+      const [showMineDropdown, setShowMineDropdown] = useState(false);
+      
+      const timeOptions = [
+        '26年第一季度', '26年第二季度', '26年第三季度', '26年第四季度',
+        '25年第一季度', '25年第二季度', '25年第三季度', '25年第四季度',
+        '24年第一季度', '24年第二季度', '24年第三季度', '24年第四季度',
+      ];
+      const [selectedTime, setSelectedTime] = useState('26年第一季度');
+      const [showTimeDropdown, setShowTimeDropdown] = useState(false);
+      
+      const mineralOptions = {
+        '西部铜业': ['铜', '铁', '铅锌'],
+        '玉龙铜业': ['铜钼', '铁'],
+        '肃北博伦': ['钒', '铁'],
+      };
+      const [selectedMineral, setSelectedMineral] = useState('');
+      const [showMineralDropdown, setShowMineralDropdown] = useState(false);
+      
+      const currentMineUnit = mineUnits[currentMineIndex];
+      
+      const shouldShowMineralFilter = (unit) => {
+        return unit === '西部铜业' || unit === '玉龙铜业' || unit === '肃北博伦';
+      };
+      
+      const getMineralOptionsForUnit = (unit) => {
+        return mineralOptions[unit] || [];
+      };
+      
+      useEffect(() => {
+        const options = getMineralOptionsForUnit(currentMineUnit);
+        if (options.length > 0) {
+          setSelectedMineral(options[0]);
+        } else {
+          setSelectedMineral('');
+        }
+      }, [currentMineIndex]);
+      
+      const handleSelectMine = (idx) => {
+        setCurrentMineIndex(idx);
+        setPieData({
+          control: Number((Math.random() * 2 + 0.5).toFixed(2)),
+          infer: Number((Math.random() * 2 + 0.3).toFixed(2)),
+          prove: Number((Math.random() * 2 + 0.2).toFixed(2)),
+        });
+        setShowMineDropdown(false);
+      };
+      
+      const pieRef = useRef(null);
+      
+      useEffect(() => {
+        if (!pieRef.current) return;
+        const chart = echarts.init(pieRef.current);
+        const option = {
+          animation: false,
+          tooltip: { trigger: 'item' },
+          legend: { show: false },
+          series: [{
+            type: 'pie',
+            radius: '65%',
+            center: ['50%', '48%'],
+            label: {
+              show: true,
+              formatter: '{b}\n{c}万吨\n{d}%',
+              color: '#8cb4d4',
+              fontSize: 10
+            },
+            labelLine: { lineStyle: { color: '#1e3a5f' } },
+            data: [
+              { value: pieData.control, name: '控制', itemStyle: { color: '#409eff' } },
+              { value: pieData.infer, name: '推断', itemStyle: { color: '#67c23a' } },
+              { value: pieData.prove, name: '探明', itemStyle: { color: '#e6a23c' } },
+            ],
+          }]
+        };
+        chart.setOption(option);
+        const ro = new ResizeObserver(() => chart.resize());
+        ro.observe(pieRef.current);
+        return () => { ro.disconnect(); chart.dispose(); };
+      }, [pieData]);
+      
+      return (
+        <div className="demo-container">
+          <h1>保有金属量资源量分类 - 筛选框演示</h1>
+          
+          <div
+            className="module-card"
+            style={{ minHeight: 280, position: 'relative' }}
+            onMouseEnter={() => setIsPieHovering(true)}
+            onMouseLeave={() => {
+              setIsPieHovering(false);
+              setShowMineDropdown(false);
+              setShowTimeDropdown(false);
+              setShowMineralDropdown(false);
+            }}
+          >
+            <div className="module-title">
+              <span>保有金属量资源量分类</span>
+              <div className="filter-tags">
+                <span
+                  className="filter-tag time-filter-tag"
+                  onClick={(e) => { e.stopPropagation(); setShowTimeDropdown(prev => !prev); }}
+                >
+                  {selectedTime} ▼
+                </span>
+                {shouldShowMineralFilter(currentMineUnit) && (
+                  <span
+                    className="filter-tag mineral-filter-tag"
+                    onClick={(e) => { e.stopPropagation(); setShowMineralDropdown(prev => !prev); }}
+                  >
+                    {selectedMineral} ▼
+                  </span>
+                )}
+                <span
+                  className="filter-tag mine-select-tag"
+                  onClick={(e) => { e.stopPropagation(); setShowMineDropdown(prev => !prev); }}
+                >
+                  {mineUnits[currentMineIndex]} ▼
+                </span>
+              </div>
+            </div>
+            
+            {showTimeDropdown && (
+              <div className="mine-dropdown time-dropdown">
+                {timeOptions.map((time) => (
+                  <div
+                    key={time}
+                    className={`mine-dropdown-item ${time === selectedTime ? 'active' : ''}`}
+                    onClick={() => { setSelectedTime(time); setShowTimeDropdown(false); }}
+                  >
+                    {time}
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {showMineralDropdown && shouldShowMineralFilter(currentMineUnit) && (
+              <div className="mine-dropdown mineral-dropdown">
+                {getMineralOptionsForUnit(currentMineUnit).map((mineral) => (
+                  <div
+                    key={mineral}
+                    className={`mine-dropdown-item ${mineral === selectedMineral ? 'active' : ''}`}
+                    onClick={() => { setSelectedMineral(mineral); setShowMineralDropdown(false); }}
+                  >
+                    {mineral}
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {showMineDropdown && (
+              <div className="mine-dropdown">
+                {mineUnits.map((name, idx) => (
+                  <div
+                    key={name}
+                    className={`mine-dropdown-item ${idx === currentMineIndex ? 'active' : ''}`}
+                    onClick={() => handleSelectMine(idx)}
+                  >
+                    {name}
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <div className="chart-box" ref={pieRef} />
+            
+            <div className="classify-text">
+              <div className="row"><span className="label">控制资源量：</span><span className="val">{pieData.control}万吨</span></div>
+              <div className="row"><span className="label">推断资源量：</span><span className="val">{pieData.infer}万吨</span></div>
+              <div className="row"><span className="label">探明资源量：</span><span className="val">{pieData.prove}万吨</span></div>
+              <div className="row total-row"><span className="label">合计资源量：</span><span className="val">{(pieData.control + pieData.infer + pieData.prove).toFixed(2)}万吨</span></div>
+            </div>
+          </div>
+          
+          <div className="info-box">
+            <h3>功能说明</h3>
+            <ul>
+              <li><strong>时间筛选框（橙色）：</strong>默认显示"26年第一季度"，可下拉选择其他季度</li>
+              <li><strong>矿种筛选框（绿色）：</strong>仅对玉龙铜业、西部铜业、肃北博伦显示</li>
+              <li><strong>矿山单位筛选框（蓝色）：</strong>切换单位时矿种筛选框自动更新</li>
+            </ul>
+            <p style={{marginTop: '10px', color: '#67c23a'}}>
+              当前选中：{currentMineUnit} 
+              {shouldShowMineralFilter(currentMineUnit) && ` - ${selectedMineral}`} 
+              - {selectedTime}
+            </p>
+          </div>
+        </div>
+      );
+    }
+    
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

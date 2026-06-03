@@ -1,0 +1,9 @@
+{
+  "project": "dashboard",
+  "installCommand": "npm install",
+  "buildCommand": "npx vite build",
+  "assetsDir": "./dist",
+  "routes": {
+    "singlePageApplication": true
+  }
+}
